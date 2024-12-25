@@ -17,18 +17,21 @@ morgan.token('body', (req) => {
 // Use custom format that includes the body for POST requests
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
+const getPersons = () => {
+  const rawData = fs.readFileSync(path.join(__dirname, 'persons.json'), 'utf8')
+  return JSON.parse(rawData)
+}
+
+const savePersons = (persons) => {
+  fs.writeFileSync(
+    path.join(__dirname, 'persons.json'),
+    JSON.stringify(persons, null, 2)
+  )
+}
+
 app.get('/api/persons', (req, res) => {
-  try {
-    const filePath = path.join(__dirname, './persons.json')
-    console.log('Attempting to read from:', filePath)
-    
-    const data = fs.readFileSync(filePath, 'utf8')
-    console.log('Data read successfully')
-    res.json(JSON.parse(data))
-  } catch (err) {
-    console.error('Error reading file:', err)
-    res.status(500).send('Error reading data: ' + err.message)
-  }
+  const persons = getPersons()
+  res.json(persons)
 })
 
 app.get('/', (req, res) => {
@@ -37,19 +40,15 @@ app.get('/', (req, res) => {
 
 //info endpoint displaing how many entries are in the phonebook
 app.get('/info', (req, res) => { 
-  const filePath = path.join(__dirname, './persons.json')
-  const data = fs.readFileSync(filePath, 'utf8')
-  const persons = JSON.parse(data)
+  const persons = getPersons()
   const date = new Date()
   res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${date}</p>`)
 })
 
 //get a single person by id, if empty return 404
 app.get('/api/persons/:id', (req, res) => {
+  const persons = getPersons()
   const id = Number(req.params.id)
-  const filePath = path.join(__dirname, './persons.json')
-  const data = fs.readFileSync(filePath, 'utf8')
-  const persons = JSON.parse(data)
   const person = persons.find(person => person.id === id)
   if (person) {
     res.json(person)
@@ -61,9 +60,7 @@ app.get('/api/persons/:id', (req, res) => {
 
 //http post to add a new person to the phonebook, generates a new id
 app.post('/api/persons', (req, res) => {
-  const filePath = path.join(__dirname, './persons.json')
-  const data = fs.readFileSync(filePath, 'utf8')
-  const persons = JSON.parse(data)
+  const persons = getPersons()
   const person = req.body
 
   // Validate empty fields
@@ -85,7 +82,7 @@ app.post('/api/persons', (req, res) => {
     : 0
   person.id = maxId + 1
   persons.push(person)
-  fs.writeFileSync(filePath, JSON.stringify(persons, null, 2))
+  savePersons(persons)
   res.json(person)
 })
 
