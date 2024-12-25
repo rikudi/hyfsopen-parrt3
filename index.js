@@ -86,6 +86,20 @@ app.post('/api/persons', (req, res) => {
   res.json(person)
 })
 
+//DELETE endpoint to remove a person by id
+app.delete('/api/persons/:id', (req, res) => {
+  const persons = getPersons()
+  const id = Number(req.params.id)
+  const filteredPersons = persons.filter(person => person.id !== id)
+  
+  if (filteredPersons.length === persons.length) {
+    return res.status(404).json({ error: 'person not found' })
+  }
+
+  savePersons(filteredPersons)
+  res.status(204).end()
+})
+
 const PORT = 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
