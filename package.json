@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:ui": "cd ..\\hsyopen\\osa2\\puhelinluettelo && npm run build && xcopy /E /I dist ..\\..\\..\\part3\\dist",
+    "deploy:full": "npm run build:ui && git add . && git commit -m uibuild && git push",
+    "test:path": "cd ..\\hsyopen\\osa2\\puhelinluettelo && echo Current directory: %cd%"
   },
   "author": "",
   "license": "ISC",
