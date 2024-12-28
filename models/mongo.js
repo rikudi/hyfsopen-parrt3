@@ -46,4 +46,3 @@ if (process.argv.length === 2) {
       mongoose.connection.close()
     })
 }
-
