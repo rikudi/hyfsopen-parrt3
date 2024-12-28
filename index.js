@@ -4,6 +4,7 @@ const path = require('path')
 const morgan = require('morgan')
 const app = express()
 const corse = require('cors')
+const db = require('./models')
 
 app.use(corse())
 app.use(express.json())
@@ -17,21 +18,13 @@ morgan.token('body', (req) => {
 // Use custom format that includes the body for POST requests
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-const getPersons = () => {
-  const rawData = fs.readFileSync(path.join(__dirname, 'persons.json'), 'utf8')
-  return JSON.parse(rawData)
-}
-
-const savePersons = (persons) => {
-  fs.writeFileSync(
-    path.join(__dirname, 'persons.json'),
-    JSON.stringify(persons, null, 2)
-  )
-}
-
-app.get('/api/persons', (req, res) => {
-  const persons = getPersons()
-  res.json(persons)
+app.get('/api/persons', async (req, res) => {
+  try {
+    const persons = await db.getAllPersons()
+    res.json(persons)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
 })
 
 app.get('/', (req, res) => {
@@ -59,31 +52,14 @@ app.get('/api/persons/:id', (req, res) => {
 )
 
 //http post to add a new person to the phonebook, generates a new id
-app.post('/api/persons', (req, res) => {
-  const persons = getPersons()
-  const person = req.body
-
-  // Validate empty fields
-  if (!person.name) {
-    return res.status(400).json({ error: 'name cannot be blank' })
+app.post('/api/persons', async (req, res) => {
+  try {
+    const { name, number } = req.body
+    const newPerson = await db.addPerson(name, number)
+    res.json(newPerson)
+  } catch (error) {
+    res.status(400).json({ error: error.message })
   }
-  if (!person.number) {
-    return res.status(400).json({ error: 'number cannot be blank' })
-  }
-
-  // Check for duplicate number
-  const existingNumber = persons.find(p => p.number === person.number)
-  if (existingNumber) {
-    return res.status(400).json({ error: 'number must be unique' })
-  }
-
-  const maxId = persons.length > 0
-    ? Math.max(...persons.map(person => person.id))
-    : 0
-  person.id = maxId + 1
-  persons.push(person)
-  savePersons(persons)
-  res.json(person)
 })
 
 //DELETE endpoint to remove a person by id
@@ -100,7 +76,7 @@ app.delete('/api/persons/:id', (req, res) => {
   res.status(204).end()
 })
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
