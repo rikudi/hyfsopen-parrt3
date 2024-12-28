@@ -1,39 +1,49 @@
+// Import our database connection and Person model
 const connectDB = require('./db')
 const Person = require('./person')
 
-// Check if the correct number of arguments is provided
+// Ensure user provides the correct command line arguments
+// process.argv contains command line arguments: [node, script.js, ...userArguments]
 if (process.argv.length < 3) {
   console.log('Usage: node mongo.js <name> <number>')
   process.exit(1)
 }
 
-// Connect to database
+// Initialize database connection
 connectDB()
 
-// If no name and number are provided, retrieve and log all persons
+// Command line interface logic:
+// If only 2 arguments (node + script name), show all entries
+// If more arguments, add new person to database
 if (process.argv.length === 2) {
+  // Find and display all persons in the database
   Person.find({}).then(result => {
     console.log('Phonebook:')
     result.forEach(person => {
       console.log(`${person.name} ${person.number}`)
     })
-    mongoose.connection.close()
+    mongoose.connection.close()  // Always close database connection when done
   })
 } else {
-  // Retrieve the name and number from the command line arguments
+  // Get name and number from command line arguments
   const name = process.argv[2]
   const number = process.argv[3]
 
-  // create and save a new person
+  // Create a new person instance using our Person model
   const person = new Person({
     name: name,
     number: number,
   })
 
-  // save the person object to the database
-  person.save().then(result => {
-    console.log('added', result.name, 'number', result.number, 'to phonebook')
-    mongoose.connection.close()
-  })
+  // Save the new person to database and show confirmation
+  person.save()
+    .then(result => {
+      console.log('added', result.name, 'number', result.number, 'to phonebook')
+      mongoose.connection.close()
+    })
+    .catch(error => {
+      console.error('Error saving person:', error)
+      mongoose.connection.close()
+    })
 }
 

@@ -63,17 +63,16 @@ app.post('/api/persons', async (req, res) => {
 })
 
 //DELETE endpoint to remove a person by id
-app.delete('/api/persons/:id', (req, res) => {
-  const persons = getPersons()
-  const id = Number(req.params.id)
-  const filteredPersons = persons.filter(person => person.id !== id)
-  
-  if (filteredPersons.length === persons.length) {
-    return res.status(404).json({ error: 'person not found' })
-  }
-
-  savePersons(filteredPersons)
-  res.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+  Person.findByIdAndDelete(request.params.id)
+    .then(deletedPerson => {
+      if (deletedPerson) {
+        response.status(204).end()
+      } else {
+        response.status(404).json({ error: 'person not found' })
+      }
+    })
+    .catch(error => next(error))
 })
 
 const PORT = process.env.PORT || 3001
