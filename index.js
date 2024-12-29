@@ -1,76 +1,61 @@
+// index.js
 const express = require('express')
-const fs = require('fs')
-const path = require('path')
-const morgan = require('morgan')
+require('dotenv').config()
 const app = express()
-const corse = require('cors')
-const db = require('./models')
 
-app.use(corse())
-app.use(express.json())
+app.use(express.json()) // Add this line to parse JSON request bodies
+
+const Person = require('./models/person')
+
 app.use(express.static('dist'))
 
-// Create custom token for logging POST request body
-morgan.token('body', (req) => {
-  return req.method === 'POST' ? JSON.stringify(req.body) : ' '
+// get all persons
+app.get('/api/persons', (request, response) => {
+  Person.find({}).then(persons => {
+    response.json(persons)
+  })
 })
 
-// Use custom format that includes the body for POST requests
-app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-app.get('/api/persons', async (req, res) => {
-  try {
-    const persons = await db.getAllPersons()
-    res.json(persons)
-  } catch (error) {
-    res.status(500).json({ error: error.message })
+// add a new person
+app.post('/api/persons', (request, response) => {
+  const body = request.body
+
+  if (!body.name || !body.number) {
+    return response.status(400).json({ 
+      error: 'name or number missing' 
+    })
   }
+
+  const person = new Person({
+    name: body.name,
+    number: body.number
+  })
+
+  person.save().then(savedPerson => {
+    response.json(savedPerson)
+  })
 })
 
-app.get('/', (req, res) => {
-  res.send('Hello World')
+// get a single person
+app.get('/api/persons/:id', (request, response, next) =>
+{
+  Person.findById(request.params.id)
+    .then(person => {
+      if (person) {
+        response.json(person)
+      } else {
+        response.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
-//info endpoint displaing how many entries are in the phonebook
-app.get('/info', (req, res) => { 
-  const persons = getPersons()
-  const date = new Date()
-  res.send(`<p>Phonebook has info for ${persons.length} people</p><p>${date}</p>`)
-})
-
-//get a single person by id, if empty return 404
-app.get('/api/persons/:id', (req, res) => {
-  const persons = getPersons()
-  const id = Number(req.params.id)
-  const person = persons.find(person => person.id === id)
-  if (person) {
-    res.json(person)
-  } else {
-    res.status(404).end()
-    }
-  } 
-)
-
-//http post to add a new person to the phonebook, generates a new id
-app.post('/api/persons', async (req, res) => {
-  try {
-    const { name, number } = req.body
-    const newPerson = await db.addPerson(name, number)
-    res.json(newPerson)
-  } catch (error) {
-    res.status(400).json({ error: error.message })
-  }
-})
-
-//DELETE endpoint to remove a person by id
+// delete a person
 app.delete('/api/persons/:id', (request, response, next) => {
   Person.findByIdAndDelete(request.params.id)
-    .then(deletedPerson => {
-      if (deletedPerson) {
-        response.status(204).end()
-      } else {
-        response.status(404).json({ error: 'person not found' })
-      }
+    .then(() => {
+      response.status(204).end()
     })
     .catch(error => next(error))
 })
@@ -79,3 +64,4 @@ const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
+
