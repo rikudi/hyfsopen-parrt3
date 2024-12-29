@@ -1,3 +1,4 @@
+/* eslint-disable @stylistic/js/linebreak-style */
 const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../index')
@@ -81,6 +82,52 @@ test('an existing person can be updated', async () => {
 
   const response = await api.get(`/api/persons/${savedPerson.id}`)
   expect(response.body.number).toBe(updatedPerson.number)
+})
+
+test('creation fails with proper error message if name is too short', async () => {
+  const newPerson = {
+    name: 'Bob',  // too short, minimum length is 5
+    number: '123-456789'
+  }
+
+  const response = await api
+    .post('/api/persons')
+    .send(newPerson)
+    .expect(400)
+    .expect('Content-Type', /application\/json/)
+
+  expect(response.body.error).toContain(response.body.error)
+})
+
+test('creation fails with proper error message if phone number is invalid', async () => {
+  const newPerson = {
+    name: 'Test User',
+    number: '123-456'  // invalid phone number
+  }
+
+  const response = await api
+    .post('/api/persons')
+    .send(newPerson)
+    .expect(400)
+    .expect('Content-Type', /application\/json/)
+
+  expect(response.body.error).toContain('is not a valid phone number')
+})
+
+test('creation succeeds with a valid phone number', async () => {
+  const newPerson = {
+    name: 'Valid User',
+    number: '040-1234567'  // valid phone number
+  }
+
+  const response = await api
+    .post('/api/persons')
+    .send(newPerson)
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+
+  expect(response.body.name).toBe(newPerson.name)
+  expect(response.body.number).toBe(newPerson.number)
 })
 
 afterAll(async () => {
