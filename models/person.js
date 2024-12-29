@@ -2,7 +2,9 @@ const mongoose = require('mongoose')
 
 mongoose.set('strictQuery', false)
 
-const url = process.env.MONGODB_URI
+const url = process.env.NODE_ENV === 'test'
+  ? process.env.TEST_MONGODB_URI
+  : process.env.MONGODB_URI
 
 console.log('connecting to', url)
 mongoose.connect(url)
@@ -21,11 +23,10 @@ const personSchema = new mongoose.Schema({
   number: {
     type: String,
     required: true,
-}
+  }
 })
 
-
-personSchema.set('toJSON', {
+personSchema.set('toJSON', {  
   transform: (document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString()
     delete returnedObject._id
