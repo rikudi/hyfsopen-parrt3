@@ -1,7 +1,7 @@
 /* eslint-disable @stylistic/js/linebreak-style */
 const mongoose = require('mongoose')
 const supertest = require('supertest')
-const app = require('../index')
+const app = require('../app')
 const Person = require('../models/person')
 
 const api = supertest(app)
@@ -96,7 +96,7 @@ test('creation fails with proper error message if name is too short', async () =
     .expect(400)
     .expect('Content-Type', /application\/json/)
 
-  expect(response.body.error).toContain(response.body.error)
+  expect(response.body.error).toContain('Name must be at least 5 characters long')
 })
 
 test('creation fails with proper error message if phone number is invalid', async () => {
@@ -116,7 +116,7 @@ test('creation fails with proper error message if phone number is invalid', asyn
 
 test('creation succeeds with a valid phone number', async () => {
   const newPerson = {
-    name: 'Valid User',
+    name: 'moro moro',
     number: '040-1234567'  // valid phone number
   }
 
@@ -128,6 +128,34 @@ test('creation succeeds with a valid phone number', async () => {
 
   expect(response.body.name).toBe(newPerson.name)
   expect(response.body.number).toBe(newPerson.number)
+})
+
+test('multiple new persons can be created', async () => {
+  const newPersons = [
+    { name: 'User One', number: '040-1234567' },
+    { name: 'User Two', number: '041-2345678' },
+    { name: 'User Three', number: '042-3456789' }
+  ]
+
+  for (const person of newPersons) {
+    const response = await api
+      .post('/api/persons')
+      .send(person)
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    expect(response.body.name).toBe(person.name)
+    expect(response.body.number).toBe(person.number)
+  }
+
+  const response = await api.get('/api/persons')
+  const persons = response.body
+
+  expect(persons).toHaveLength(newPersons.length)
+  newPersons.forEach(person => {
+    expect(persons.map(p => p.name)).toContain(person.name)
+    expect(persons.map(p => p.number)).toContain(person.number)
+  })
 })
 
 afterAll(async () => {

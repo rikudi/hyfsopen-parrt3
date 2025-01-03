@@ -1,0 +1,55 @@
+GET http://localhost:3001/api/persons
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+    "name": "will smith",
+    "number": "045-123456"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+    "name": "",
+    "number": "040-123456"
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+    "name": "John Smith",
+    "number": ""
+}
+
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+    "name": "poista",
+    "number": "123-456789"
+}
+
+###
+DELETE http://localhost:3001/api/persons/67714d0fb5e325824f8c8f3f
+
+###
+GET http://localhost:3001/api/persons/676f6220f5509040a7a8fcaf
+
+###
+GET http://localhost:3001/info
+
+###
+PUT http://localhost:3001/api/persons/
+Content-Type: application/json
+
+{
+    "name": "John Smith",
+    "number": "040-123456"
+}
